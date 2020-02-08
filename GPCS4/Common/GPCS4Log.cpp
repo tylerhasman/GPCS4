@@ -67,9 +67,9 @@ void initLogChannel(const cxxopts::ParseResult& optResult)
 {
 	/// Init log channel
 
-	if (optResult.count("D"))
+	if (optResult.count("debug-channel"))
 	{
-		auto ls = optResult["D"].as<std::vector<std::string>>();
+		auto ls = optResult["debug-channel"].as<std::vector<std::string>>();
 
 		for (auto&& s : ls)
 		{
@@ -79,20 +79,13 @@ void initLogChannel(const cxxopts::ParseResult& optResult)
 			}
 		}
 	}
-	else if (optResult.count("L"))
+	if (optResult.count("list-debug-channels"))
 	{
 		for (auto&& p : ChannelContainer::get()->getChannels())
 		{
 			printf("%s\n", p->getName().c_str());
 		}
 	}
-	//else
-	//{
-	//	for (auto&& p : ChannelContainer::get()->getChannels())
-	//	{
-	//		p->checkSig("ALL");
-	//	}
-	//}
 }
 
 void init(const cxxopts::ParseResult& optResult)
