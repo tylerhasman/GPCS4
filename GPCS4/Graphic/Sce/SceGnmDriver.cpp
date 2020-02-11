@@ -7,8 +7,6 @@
 #include "../Gnm/GnmCommandBufferDummy.h"
 #include "../Gve/GveInstance.h"
 #include "../Gve/GveSwapChain.h"
-#include "../Gve/GvePipelineManager.h"
-#include "../Gve/GveResourceManager.h"
 #include "../Gve/GvePresenter.h"
 #include "../Gve/GveCmdList.h"
 #include "../Gve/GveImage.h"
@@ -86,6 +84,11 @@ int SceGnmDriver::submitAndFlipCommandBuffers(uint32_t count,
 		}
 	
 		auto cmdList = cmdParser->getCommandBuffer()->getCmdList();
+		if (!cmdList)
+		{
+			// cmdList is null when GPCS4_NO_GRAPHICS defined
+			break;
+		}
 
 		m_presenter->present(cmdList);
 		// TODO:

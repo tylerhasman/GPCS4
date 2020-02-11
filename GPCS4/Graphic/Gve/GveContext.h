@@ -21,7 +21,7 @@ class GveImage;
 class GveImageView;
 class GveSampler;
 class GvePipelineManager;
-class GveResourceManager;
+class GveSharpResourceManager;
 class GveRenderPass;
 class GveResourceObjects;
 class GveDescriptorPool;
@@ -46,11 +46,11 @@ struct GvePipelineContext
 // This is our render context.
 // Just like GfxContext in PS4, one GveContex should be bound to one display buffer.
 
-class GveContex : public RcObject
+class GveContext : public RcObject
 {
 public:
-	GveContex(const RcPtr<GveDevice>& device);
-	~GveContex();
+	GveContext(const RcPtr<GveDevice>& device);
+	~GveContext();
 
 	void beginRecording(const RcPtr<GveCmdList>& commandBuffer);
 
