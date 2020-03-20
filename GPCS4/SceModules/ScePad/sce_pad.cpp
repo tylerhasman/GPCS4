@@ -122,12 +122,28 @@ int PS4API scePadRead(int32_t handle, ScePadData *pData, int32_t num)
 	return g_padSlot[handle]->read(pData, num);
 }
 
+int PS4API scePadSetTiltCorrectionState(int32_t handle, bool bEnable)
+{
+	LOG_SCE_DUMMY_IMPL();
+	return SCE_OK;
+}
+
 
 int PS4API scePadReadState(int32_t handle, ScePadData *pData)
 {
 	LOG_SCE_TRACE("handle %d", handle);
+	int err = SCE_PAD_ERROR_INVALID_HANDLE;
+	do 
+	{
+		auto& pad = g_padSlot[handle];
+		if (!pad)
+		{
+			break;
+		}
 
-	return g_padSlot[handle]->readState(pData);
+		err = g_padSlot[handle]->readState(pData);
+	} while (false);
+	return err;
 }
 
 

@@ -1,6 +1,7 @@
 #include "GCNCompiler.h"
+#include "UtilString.h"
 #include "GCNParser/SOP1Instruction.h"
-#include "Platform/UtilString.h"
+
 
 LOG_CHANNEL(Graphic.Pssl.GCNCompilerScalarALU);
 
@@ -102,7 +103,7 @@ void GCNCompiler::getSopOperands(
 	uint32_t* sdst, uint32_t* sdstRidx, 
 	uint32_t* src0, uint32_t* src0Ridx, 
 	uint32_t* src1 /*= nullptr*/, uint32_t* src1Ridx /*= nullptr*/,
-	int64_t* imm /*= nullptr*/)
+	int16_t* imm /*= nullptr*/)
 {
 	auto encoding = ins.instruction->GetInstructionFormat();
 	switch (encoding)
@@ -167,7 +168,7 @@ void GCNCompiler::emitScalarMov(GCNInstruction& ins)
 	{
 	case SISOP1Instruction::S_MOV_B32:
 	{
-		auto value = emitLoadScalarOperand(ssrc, sidx, ins.literalConst, SpirvScalarType::Uint32);
+		auto value = emitLoadScalarOperand(ssrc, sidx, SpirvScalarType::Unknown, ins.literalConst);
 		emitStoreScalarOperand(sdst, didx, value);
 	}
 		break;
@@ -185,7 +186,45 @@ void GCNCompiler::emitScalarMov(GCNInstruction& ins)
 
 void GCNCompiler::emitScalarArith(GCNInstruction& ins)
 {
-	LOG_PSSL_UNHANDLED_INST();
+	uint32_t op = getSopOpcode(ins);
+
+	uint32_t sdst;
+	uint32_t src0;
+	uint32_t src1;
+	uint32_t sdstRidx;
+	uint32_t src0Ridx;
+	uint32_t src1Ridx;
+	int16_t  imm = 0;
+	getSopOperands(ins, &sdst, &sdstRidx, &src0, &src0Ridx, &src1, &src1Ridx, &imm);
+
+	auto       opType  = ins.instruction->GetInstructionOperandType();
+	const auto dstType = getScalarType(opType);
+
+	LOG_ASSERT(dstType == SpirvScalarType::Uint32 || dstType == SpirvScalarType::Sint32, "error operand type");
+
+	SpirvRegisterValue spvSrc0 = {};
+	SpirvRegisterValue spvSrc1 = {};
+	if (ins.instruction->GetInstructionFormat() == Instruction::InstructionSet_SOP2)
+	{
+		// Should be SOP2
+		spvSrc0 = emitLoadScalarOperand(src0, src0Ridx, dstType, ins.literalConst);
+		spvSrc1 = emitLoadScalarOperand(src1, src1Ridx, dstType, ins.literalConst);
+	}
+
+	SpirvRegisterValue dstVal;
+	dstVal.type.ctype  = dstType;
+	dstVal.type.ccount = 1;
+
+	const uint32_t typeId = getVectorTypeId(dstVal.type);
+
+	switch (op)
+	{
+	default:
+		LOG_PSSL_UNHANDLED_INST();
+		break;
+	}
+
+	emitStoreScalarOperand(sdst, sdstRidx, dstVal);
 }
 
 void GCNCompiler::emitScalarAbs(GCNInstruction& ins)
@@ -221,12 +260,12 @@ void GCNCompiler::emitScalarBitLogic(GCNInstruction& ins)
 
 	LOG_ASSERT(dstType == SpirvScalarType::Uint32 || dstType == SpirvScalarType::Uint64, "error operand type");
 
-	SpirvRegisterValue spvSrc0 = emitLoadScalarOperand(src0, src0Ridx, ins.literalConst, dstType);
+	SpirvRegisterValue spvSrc0 = emitLoadScalarOperand(src0, src0Ridx, dstType, ins.literalConst);
 	SpirvRegisterValue spvSrc1;
 	if (ins.instruction->GetInstructionFormat() == Instruction::InstructionSet_SOP2)
 	{
 		// Only SOP2 has ssrc1
-		spvSrc1 = emitLoadScalarOperand(src1, src1Ridx, ins.literalConst, dstType);
+		spvSrc1 = emitLoadScalarOperand(src1, src1Ridx, dstType, ins.literalConst);
 	}
 
 	SpirvRegisterValue dstVal;

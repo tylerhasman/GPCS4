@@ -1,8 +1,9 @@
 #include "Linker.h"
 #include "ModuleSystemCommon.h"
 #include "SceModuleSystem.h"
+#include "UtilString.h"
 #include "Loader/FuncStub.h"
-#include "Platform/PlatformUtils.h"
+
 
 LOG_CHANNEL(Linker);
 
@@ -123,7 +124,7 @@ void* CLinker::generateStubFunction(const SymbolInfo* sybInfo, void* oldFunc) co
 		{
 			// NOTE: Something is wrong with va_args and u64 values, so print NID as 2 u32
 			formatString =
-				"Unknown Function nid 0x%08x%08x (\"%s\") from lib:%s is called";
+				"Unknown Function nid 0x%08X%08X (\"%s\") from lib:%s is called";
 		}
 		else
 		{

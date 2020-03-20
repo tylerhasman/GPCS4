@@ -14,10 +14,10 @@ void GCNCompiler::emitExp(GCNInstruction& ins)
 	auto shaderType = m_programInfo.shaderType();
 	switch (shaderType)
 	{
-	case pssl::VertexShader:
+	case pssl::PsslProgramType::VertexShader:
 		emitExpVS(ins);
 		break;
-	case pssl::PixelShader:
+	case pssl::PsslProgramType::PixelShader:
 		emitExpPS(ins);
 		break;
 	default:
@@ -79,7 +79,7 @@ SpirvRegisterValue GCNCompiler::emitExpSrcLoadNoCompr(GCNInstruction& ins)
 		}
 
 		uint32_t regIdx = inst->GetVSRC(i);
-		indices.push_back(emitLoadVectorOperand(regIdx).id);
+		indices.push_back(emitLoadVectorOperand(regIdx, SpirvScalarType::Float32).id);
 	}
 
 	// Src vector to be exported.
