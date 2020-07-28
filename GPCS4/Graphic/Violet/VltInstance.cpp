@@ -11,7 +11,16 @@ namespace vlt
 
 VltInstance::VltInstance(const std::vector<const char*>& requiredExtensions)
 {
+	LOG_DEBUG("Creating vulkan instance");
 	createInstance(requiredExtensions);
+	if (m_instance != VK_NULL_HANDLE) 
+	{
+		LOG_DEBUG("Vulkan instance created! %p", m_instance);
+	}
+	else {
+		LOG_DEBUG("Vulkan instance could not be created...");
+	}
+	
 
 #ifdef VLT_VALIDATION_LAYERS_ENABLE
 	setupDebugMessenger();
@@ -55,16 +64,17 @@ std::vector<RcPtr<VltPhysicalDevice>> VltInstance::enumPhysicalDevices()
 
 void VltInstance::createInstance(const std::vector<const char*>& requiredExtensions)
 {
-	do 
+	do
 	{
-
+		bool enableValidationLayers = checkValidationLayerSupport();
 #ifdef VLT_VALIDATION_LAYERS_ENABLE
-		if (!checkValidationLayerSupport())
+		/*if (!checkValidationLayerSupport())
 		{
+			LOG_DEBUG("Validation Layer not supported");
 			break;
-		}
+		}*/
 #endif // VLT_VALIDATION_LAYERS_ENABLE
-	
+
 		VkApplicationInfo appInfo = {};
 		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 		appInfo.pApplicationName = GPCS4_APP_NAME;
@@ -79,34 +89,37 @@ void VltInstance::createInstance(const std::vector<const char*>& requiredExtensi
 
 		std::vector<const char*> extensions(requiredExtensions);
 
-#ifdef VLT_VALIDATION_LAYERS_ENABLE
-		extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-#endif // VLT_VALIDATION_LAYERS_ENABLE
+		if (enableValidationLayers) {
+			extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+		}
 
 		createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
 		createInfo.ppEnabledExtensionNames = extensions.data();
 
-#ifdef VLT_VALIDATION_LAYERS_ENABLE
+		if (enableValidationLayers) {
+			createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+			createInfo.ppEnabledLayerNames = validationLayers.data();
+
+			VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
+			populateDebugMessengerCreateInfo(debugCreateInfo);
+			createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
+		}
+		else {
+
+			createInfo.enabledLayerCount = 0;
+			createInfo.pNext = nullptr;
+		}
 		
-		createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
-		createInfo.ppEnabledLayerNames = validationLayers.data();
 
-		VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
-		populateDebugMessengerCreateInfo(debugCreateInfo);
-		createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
-		
-#else  // VLT_VALIDATION_LAYERS_ENABLE
+		int result = vkCreateInstance(&createInfo, nullptr, &m_instance);
 
-		createInfo.enabledLayerCount = 0;
-		createInfo.pNext = nullptr;
-
-#endif  // VLT_VALIDATION_LAYERS_ENABLE
-
-		if (vkCreateInstance(&createInfo, nullptr, &m_instance) != VK_SUCCESS) 
+		if (result != VK_SUCCESS) 
 		{
-			LOG_ERR("create vulkan instance failed.");
+			LOG_ERR("create vulkan instance failed. Error code: %d", result);
 			break;
 		}
+
+		LOG_DEBUG("Created Vulkan instance %p", m_instance);
 
 	} while (false);
 }
@@ -179,6 +192,7 @@ VkResult VltInstance::createDebugUtilsMessengerEXT(const VkDebugUtilsMessengerCr
 		auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(m_instance, "vkCreateDebugUtilsMessengerEXT");
 		if (!func) 
 		{
+			LOG_DEBUG("vkCreateDebugUtilsMessengerEXT is NULL!");
 			break;
 		}
 
