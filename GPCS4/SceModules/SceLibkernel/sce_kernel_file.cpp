@@ -97,8 +97,8 @@ int PS4API scek__write(int fd, const void* buf, size_t size)
 
 int PS4API sceKernelOpen(const char *path, int flags, SceKernelMode mode)
 {
-	LOG_SCE_TRACE("path %s flag %x mode %x", path, flags, mode);
 	std::string pcPath = UtilPath::PS4PathToPCPath(path);
+	LOG_SCE_TRACE("path %s flag %x mode %x (%s)", path, flags, mode, pcPath.c_str());
 
 #ifdef GPCS4_WINDOWS
 	int idx = g_fdSlots.GetEmptySlotIndex();
